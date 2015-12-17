@@ -1,0 +1,6 @@
+rootProject.name = 'test-serialization'
+
+//region modules
+include 'serialization'
+include 'test-app'
+//endregion
