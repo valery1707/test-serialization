@@ -1,18 +1,15 @@
 group 'name.valery1707.test'
 version '1.0-SNAPSHOT'
 
-repositories {
-	mavenCentral()
-}
-buildscript {
+allprojects {
 	repositories {
 		mavenCentral()
 	}
-}
-
-
-allprojects {
-
+	buildscript {
+		repositories {
+			mavenCentral()
+		}
+	}
 }
 
 subprojects {
