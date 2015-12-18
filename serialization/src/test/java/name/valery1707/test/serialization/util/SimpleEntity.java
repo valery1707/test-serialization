@@ -2,12 +2,18 @@ package name.valery1707.test.serialization.util;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 
 public class SimpleEntity {
 	private String name;
 	private Integer integer;
 
+	public SimpleEntity() {
+	}
+
 	public SimpleEntity(String name, Integer integer) {
+		this();
 		setName(name);
 		setInteger(integer);
 	}
@@ -52,5 +58,13 @@ public class SimpleEntity {
 				.append(getName())
 				.append(getInteger())
 				.toHashCode();
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
+				.append("name", name)
+				.append("integer", integer)
+				.toString();
 	}
 }

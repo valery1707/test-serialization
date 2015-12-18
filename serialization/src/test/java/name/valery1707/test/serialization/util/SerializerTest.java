@@ -1,7 +1,6 @@
 package name.valery1707.test.serialization.util;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,11 +14,15 @@ public class SerializerTest {
 		serializer = new Serializer();
 	}
 
-	private <T> void test(String message, T value) {
+	private <T> void test(T value) throws Exception {
+		test(value.toString(), value);
+	}
+
+	private <T> void test(String message, T value) throws Exception {
 		test(message, value, value.getClass());
 	}
 
-	private <T> void test(String message, T value, Class<? extends T> clazz) {
+	private <T> void test(String message, T value, Class<? extends T> clazz) throws Exception {
 		T dst;
 		String result;
 
@@ -39,8 +42,12 @@ public class SerializerTest {
 	}
 
 	@Test
-	@Ignore
-	public void testSimpleEntity() throws Exception {
-		test("SimpleEntity(null, null)", new SimpleEntity(null, null));
+	public void testSimpleEntity_empty() throws Exception {
+		test(new SimpleEntity(null, null));
+	}
+
+	@Test
+	public void testSimpleEntity_str1() throws Exception {
+		test(new SimpleEntity("123", null));
 	}
 }

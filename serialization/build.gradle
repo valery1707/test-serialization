@@ -1,5 +1,6 @@
 version = "0.0.1"
 
 dependencies {
+	compile 'one.util:streamex:0.5.1'
 	testCompile 'org.apache.commons:commons-lang3:3.4'
 }
