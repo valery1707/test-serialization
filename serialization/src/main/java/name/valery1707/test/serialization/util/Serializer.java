@@ -1,14 +1,38 @@
 package name.valery1707.test.serialization.util;
 
+import name.valery1707.test.serialization.util.spi.TypeProcessor;
+import name.valery1707.test.serialization.util.utils.CombinedReader;
 import one.util.streamex.StreamEx;
 
 import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
+import java.util.ServiceLoader;
 
 public class Serializer {
+
+	private final List<? extends TypeProcessor<?>> processorList;
+	private final Map<Class, TypeProcessor<?>> processorMap = new HashMap<>();
+
+	public Serializer() {
+		ServiceLoader<TypeProcessor> loader = ServiceLoader.load(TypeProcessor.class);
+		processorList = StreamEx.of(loader.iterator()).map(p -> (TypeProcessor<?>) p).toList();
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T> TypeProcessor<T> getProcessor(Class<T> type) {
+		TypeProcessor<?> processor = processorMap.computeIfAbsent(type, this::findProcessor);
+		return (TypeProcessor<T>) processor;
+	}
+
+	private TypeProcessor<?> findProcessor(Class<?> type) {
+		return StreamEx.of(processorList)
+				.findAny(p -> p.canProcess(type))
+				.orElse(null);
+	}
 
 	public <T> T readValue(InputStream src, Charset charset, Class<T> clazz) throws Exception {
 		return readValue(new InputStreamReader(src, charset), clazz);
@@ -82,57 +106,22 @@ public class Serializer {
 	}
 
 	private Object intReadValue(Reader src, Class<?> type) throws IOException {
-		if (CharSequence.class.isAssignableFrom(type)) {
-			return intReadString(src, false);
+		TypeProcessor<?> processor = getProcessor(type);
+		if (processor != null) {
+			return processor.read(src);
+		} else {
+			intSkipValue(src);
+			return null;
 		}
-		intSkipValue(src);
-		return null;
 	}
 
-	private static final Pattern STR_ESCAPE_ITEMS = Pattern.compile("(\\\\|\")");
-
 	private void intWriteString(Writer dst, CharSequence value) throws IOException {
-		dst
-				.append('"')
-				.append(STR_ESCAPE_ITEMS.matcher(value).replaceAll("\\\\$1"))
-				.append('"');
+		getProcessor(CharSequence.class).write(dst, value);
 	}
 
 	private String intReadString(Reader src, boolean alreadyStarted) throws IOException {
-		StringBuilder buf = new StringBuilder();
-		int i;
-		boolean escaped = false;
-		while ((i = src.read()) >= 0) {
-			char c = (char) i;
-			switch (c) {
-				case '"':
-					if (escaped) {
-						buf.append('"');
-						escaped = false;
-					} else if (alreadyStarted) {
-						return buf.toString();
-					} else {
-						alreadyStarted = true;
-					}
-					break;
-				case '\\':
-					if (escaped) {
-						buf.append('\\');
-						escaped = false;
-					} else {
-						escaped = true;
-					}
-					break;
-				default:
-					if (alreadyStarted) {
-						buf.append(c);
-					} else {
-						throw new IllegalStateException("String is not started, but content is appeared: " + c);
-					}
-					break;
-			}
-		}
-		throw new IllegalStateException("String is not ended: " + buf.toString());
+		src = alreadyStarted ? new CombinedReader(new StringReader("\""), src) : src;
+		return getProcessor(String.class).read(src);
 	}
 
 	public String writeValueAsString(Object src) throws IOException, IllegalAccessException {
@@ -154,12 +143,11 @@ public class Serializer {
 				if (value == null) {
 					continue;
 				}
-				intWriteString(dst, field.getName());
-				dst.append(':');
-				if (CharSequence.class.isAssignableFrom(field.getType())) {
+				TypeProcessor<?> processor = getProcessor(field.getType());
+				if (processor != null) {
+					intWriteString(dst, field.getName());
+					dst.append(':');
 					intWriteString(dst, (CharSequence) value);
-				} else {
-					dst.append("{}");
 				}
 			}
 			dst.append('}');
