@@ -6,6 +6,7 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class Serializer {
 
@@ -88,17 +89,38 @@ public class Serializer {
 		return null;
 	}
 
+	private static final Pattern STR_ESCAPE_ITEMS = Pattern.compile("(\\\\|\")");
+
+	private void intWriteString(Writer dst, CharSequence value) throws IOException {
+		dst
+				.append('"')
+				.append(STR_ESCAPE_ITEMS.matcher(value).replaceAll("\\\\$1"))
+				.append('"');
+	}
+
 	private String intReadString(Reader src, boolean alreadyStarted) throws IOException {
 		StringBuilder buf = new StringBuilder();
 		int i;
+		boolean escaped = false;
 		while ((i = src.read()) >= 0) {
 			char c = (char) i;
 			switch (c) {
 				case '"':
-					if (alreadyStarted) {
+					if (escaped) {
+						buf.append('"');
+						escaped = false;
+					} else if (alreadyStarted) {
 						return buf.toString();
 					} else {
 						alreadyStarted = true;
+					}
+					break;
+				case '\\':
+					if (escaped) {
+						buf.append('\\');
+						escaped = false;
+					} else {
+						escaped = true;
 					}
 					break;
 				default:
@@ -132,9 +154,10 @@ public class Serializer {
 				if (value == null) {
 					continue;
 				}
-				dst.append('"').append(field.getName()).append('"').append(':');
+				intWriteString(dst, field.getName());
+				dst.append(':');
 				if (CharSequence.class.isAssignableFrom(field.getType())) {
-					dst.append('"').append(value.toString()).append('"');
+					intWriteString(dst, (CharSequence) value);
 				} else {
 					dst.append("{}");
 				}

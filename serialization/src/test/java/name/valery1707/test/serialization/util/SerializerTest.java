@@ -50,4 +50,14 @@ public class SerializerTest {
 	public void testSimpleEntity_str1() throws Exception {
 		test(new SimpleEntity("123", null));
 	}
+
+	@Test
+	public void testSimpleEntity_str_escapeQuote() throws Exception {
+		test(new SimpleEntity("123\"321", null));
+	}
+
+	@Test
+	public void testSimpleEntity_str_escapeEscape() throws Exception {
+		test(new SimpleEntity("123\\321", null));
+	}
 }
