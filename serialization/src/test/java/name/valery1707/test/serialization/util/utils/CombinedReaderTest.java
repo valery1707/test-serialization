@@ -19,6 +19,7 @@ public class CombinedReaderTest {
 			while ((i = src.read()) >= 0) {
 				buf.append((char) i);
 			}
+			src.close();
 		} catch (IOException e) {
 			throw new IllegalStateException(e);
 		}
@@ -33,6 +34,7 @@ public class CombinedReaderTest {
 			while ((len = src.read(cbuf)) > 0) {
 				buf.append(cbuf, 0, len);
 			}
+			src.close();
 		} catch (IOException e) {
 			throw new IllegalStateException(e);
 		}
@@ -50,6 +52,7 @@ public class CombinedReaderTest {
 			while ((len = src.read(cbuf, bufOff, buffUsableLen)) > 0) {
 				buf.append(cbuf, bufOff, len);
 			}
+			src.close();
 		} catch (IOException e) {
 			throw new IllegalStateException(e);
 		}
