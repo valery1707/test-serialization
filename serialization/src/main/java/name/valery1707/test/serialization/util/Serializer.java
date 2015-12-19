@@ -168,15 +168,16 @@ public class Serializer {
 					break;
 				case ']'://Collection end
 					deepCol--;
-					if (deepCol == 0) {
+					if (deepCol == 0 && deepObj == 0) {
 						return;
 					}
 					break;
 				case '{'://Object start
 					deepObj++;
+					break;
 				case '}'://Object end
 					deepObj--;
-					if (deepObj == 0) {
+					if (deepCol == 0 && deepObj == 0) {
 						return;
 					}
 					break;

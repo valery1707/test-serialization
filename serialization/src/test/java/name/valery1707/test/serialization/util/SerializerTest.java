@@ -83,10 +83,21 @@ public class SerializerTest {
 		String dst = serializer.writeValueAsString(makeSimpleTree1());
 		assertThat(dst).isEqualTo(json(
 				"{'name':'root','children':[" +
-				"{'name':'root.1','children':[{'name':'root.1.1','children':[]},{'name':'root.1.2','children':[]}]}," +
-				"{'name':'root.2','children':[{'name':'root.2.1','children':[]},{'name':'root.2.2','children':[]}]}" +
+				"{'name':'root.1','children':[{'name':'root.1.1'},{'name':'root.1.2'}]}," +
+				"{'name':'root.2','children':[{'name':'root.2.1'},{'name':'root.2.2'}]}" +
 				"]}"
 		));
+	}
+
+	@Test
+	public void testSimpleTree_read_broken() throws Exception {
+		SimpleTree dst = serializer.readValue(json(
+				"{'name':'root','children':[" +
+				"{'name':'root.1','children_bad':[{'name':'root.1.1','children':[]},{'name':'root.1.2','children':[]}]}," +
+				"{'name':'root.2','children-bad':[{'name':'root.2.1','children':[]},{'name':'root.2.2','children':[]}]}" +
+				"]}"
+		), SimpleTree.class);
+		assertThat(dst).isEqualTo(new SimpleTree("root", new SimpleTree("root.1"), new SimpleTree("root.2")));
 	}
 
 	@Test

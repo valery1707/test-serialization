@@ -19,7 +19,9 @@ public class SimpleTree {
 	public SimpleTree(String name, SimpleTree... children) {
 		this();
 		setName(name);
-		setChildren(Arrays.asList(children));
+		if (children.length != 0) {
+			setChildren(Arrays.asList(children));
+		}
 //		this.children.forEach(child -> child.setParent(this));
 	}
 
