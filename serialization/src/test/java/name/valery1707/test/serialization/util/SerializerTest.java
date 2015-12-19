@@ -1,6 +1,7 @@
 package name.valery1707.test.serialization.util;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,6 +43,12 @@ public class SerializerTest {
 	}
 
 	@Test
+	public void testString() throws Exception {
+		assertThat(serializer.writeValueAsString("123"))
+				.isEqualTo("\"123\"");
+	}
+
+	@Test
 	public void testSimpleEntity_empty() throws Exception {
 		test(new SimpleEntity(null, null));
 	}
@@ -59,5 +66,33 @@ public class SerializerTest {
 	@Test
 	public void testSimpleEntity_str_escapeEscape() throws Exception {
 		test(new SimpleEntity("123\\321", null));
+	}
+
+	private SimpleTree makeSimpleTree1() {
+		return new SimpleTree("root"
+				, new SimpleTree("root.1", new SimpleTree("root.1.1"), new SimpleTree("root.1.2"))
+				, new SimpleTree("root.2", new SimpleTree("root.2.1"), new SimpleTree("root.2.2"))
+		);
+	}
+
+	private String json(String src) {
+		return src.replace('\'', '"');
+	}
+
+	@Test
+	public void testSimpleTree_write() throws Exception {
+		String dst = serializer.writeValueAsString(makeSimpleTree1());
+		assertThat(dst).isEqualTo(json(
+				"{'name':'root','children':[" +
+				"{'name':'root.1','children':[{'name':'root.1.1','children':[]},{'name':'root.1.2','children':[]}]},"+
+				"{'name':'root.2','children':[{'name':'root.2.1','children':[]},{'name':'root.2.2','children':[]}]}"+
+				"]}"
+		));
+	}
+
+	@Test
+	@Ignore
+	public void testSimpleTree() throws Exception {
+		test(makeSimpleTree1());
 	}
 }

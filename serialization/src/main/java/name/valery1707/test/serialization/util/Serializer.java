@@ -9,15 +9,14 @@ import javax.annotation.Nullable;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.ServiceLoader;
+import java.util.*;
 
 public class Serializer {
 
 	private final List<? extends TypeProcessor<?>> processorList;
 	private final Map<Class, TypeProcessor<?>> processorMap = new HashMap<>();
+	//todo Нужно не напрямую читать значение из поля, а использовать getter если он есть
+	private final Map<Class, List<Field>> classFields = new HashMap<>();
 
 	public Serializer() {
 		ServiceLoader<TypeProcessor> processorLoader = ServiceLoader.load(TypeProcessor.class);
@@ -35,6 +34,18 @@ public class Serializer {
 		return StreamEx.of(processorList)
 				.findAny(p -> p.canProcess(type))
 				.orElse(null);
+	}
+
+	private List<Field> getFields(Class<?> type) {
+		return classFields.computeIfAbsent(type, this::findFields);
+	}
+
+	private List<Field> findFields(Class type) {
+		//todo Нужно перебирать все поля. То есть не только объявленные в текущем классе, но и в его родительских
+		return StreamEx.of(type.getDeclaredFields())
+				.remove(Field::isSynthetic)
+				//todo Нужен механизм для удаления из сериализации определённых полей
+				.toList();
 	}
 
 	public <T> T readValue(InputStream src, Charset charset, Class<T> clazz) throws Exception {
@@ -150,24 +161,44 @@ public class Serializer {
 		if (processor != null) {
 			processor.write(dst, src);
 			//todo Process array
-			//todo Process Collection
+		} else if (src instanceof Iterable<?>) {
+			intWriteIterable(dst, (Iterable<?>) src);
 			//todo Process Map
 		} else {
 			intWriteObject(dst, src);
 		}
 	}
 
+	private void intWriteIterable(Writer dst, Iterable<?> src) throws IOException, IllegalAccessException {
+		//todo Write empty collections?
+		dst.append('[');
+		for (Iterator<?> iterator = src.iterator(); iterator.hasNext(); ) {//todo Null values?
+			Object item = iterator.next();
+			intWriteSomething(dst, item);
+			if (iterator.hasNext()) {
+				dst.append(',');
+			}
+		}
+		dst.append(']');
+	}
+
 	private void intWriteObject(Writer dst, @Nonnull Object src) throws IOException, IllegalAccessException {
 		dst.append('{');
 		Class<?> clazz = src.getClass();
-		for (Field field : clazz.getDeclaredFields()) {
-			Object value = intReadFieldValue(src, field);
-			if (value == null) {
-				continue;
-			}
+		List<Map.Entry<Field, Object>> values = StreamEx.of(getFields(clazz))
+				.mapToEntry(field -> intReadFieldValue(src, field))
+				.nonNullValues()
+				.toList();
+		for (Iterator<Map.Entry<Field, Object>> iterator = values.iterator(); iterator.hasNext(); ) {
+			Map.Entry<Field, Object> item = iterator.next();
+			Field field = item.getKey();
+			Object value = item.getValue();
 			intWriteString(dst, field.getName());
 			dst.append(':');
 			intWriteSomething(dst, value);
+			if (iterator.hasNext()) {
+				dst.append(',');
+			}
 		}
 		dst.append('}');
 	}
@@ -189,13 +220,15 @@ public class Serializer {
 		}
 	}
 
-	private Object intReadFieldValue(Object src, Field field) throws IllegalAccessException {
+	private Object intReadFieldValue(Object src, Field field) {
 		boolean accessible = field.isAccessible();
 		try {
 			if (!accessible) {
 				field.setAccessible(true);
 			}
 			return field.get(src);
+		} catch (IllegalAccessException e) {
+			throw new IllegalStateException(e);
 		} finally {
 			if (!accessible) {
 				field.setAccessible(false);
