@@ -184,6 +184,7 @@ public class Serializer {
 	}
 
 	private void intWriteObject(Writer dst, @Nonnull Object src) throws IOException, IllegalAccessException {
+		//todo Необходимо учитывать возможность зацикленности графа объектов
 		dst.append('{');
 		Class<?> clazz = src.getClass();
 		List<Map.Entry<Field, Object>> values = StreamEx.of(getFields(clazz))
