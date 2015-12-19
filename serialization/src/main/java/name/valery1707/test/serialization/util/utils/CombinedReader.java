@@ -17,6 +17,7 @@ public class CombinedReader extends Reader {
 
 	@Override
 	public int read(char[] buf, int off, int len) throws IOException {
+		//todo Чтение проводить внутри блока synchronized (lock)
 		if (eof()) {
 			return -1;
 		}

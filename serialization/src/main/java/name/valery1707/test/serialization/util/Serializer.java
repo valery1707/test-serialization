@@ -29,6 +29,7 @@ public class Serializer {
 	private <T> TypeProcessor<T> getProcessor(Class<T> type) {
 		//todo Current realization is not thread-safe
 		TypeProcessor<?> processor = processorMap.computeIfAbsent(type, this::findProcessor);
+		//todo Текущая мапа не хранит вычисленные null значение, и значит для не известных типов каждый раз идёт проход по коллекции
 		return (TypeProcessor<T>) processor;
 	}
 
@@ -59,13 +60,13 @@ public class Serializer {
 	}
 
 	public <T> T readValue(Reader src, Class<T> clazz) throws Exception {
-		return intReadSomething(src, clazz, null);
+		return intReadSomething(new BufferedReader(src), clazz, null);
 	}
 
 	private <T> T intReadSomething(Reader src, Class<T> type, Type genericType) throws IOException, InstantiationException, IllegalAccessException {
 		TypeProcessor<T> processor = getProcessor(type);
 		if (processor != null) {
-			return processor.read(src);
+			return processor.read(src, type);
 			//todo Process array
 		} else if (Iterable.class.isAssignableFrom(type)) {
 			return intReadIterable(src, type, genericType);
@@ -194,7 +195,7 @@ public class Serializer {
 
 	private String intReadString(Reader src, boolean alreadyStarted) throws IOException {
 		src = alreadyStarted ? new CombinedReader(new StringReader("\""), src) : src;
-		return getProcessor(String.class).read(src);
+		return getProcessor(String.class).read(src, String.class);
 	}
 
 	public String writeValueAsString(@Nullable Object src) throws IOException, IllegalAccessException {

@@ -24,7 +24,7 @@ public class StringProcessor implements TypeProcessor<CharSequence> {
 	}
 
 	@Override
-	public CharSequence read(Reader src) throws IOException {
+	public <R extends CharSequence> R read(Reader src, Class<R> type) throws IOException {
 		StringBuilder buf = new StringBuilder();
 		boolean alreadyStarted = false;
 		int i;
@@ -37,7 +37,7 @@ public class StringProcessor implements TypeProcessor<CharSequence> {
 						buf.append('"');
 						escaped = false;
 					} else if (alreadyStarted) {
-						return buf.toString();
+						return wrap(buf, type);
 					} else {
 						alreadyStarted = true;
 					}
@@ -60,5 +60,16 @@ public class StringProcessor implements TypeProcessor<CharSequence> {
 			}
 		}
 		throw new IllegalStateException("String is not ended: " + buf.toString());
+	}
+
+	@SuppressWarnings("unchecked")
+	private <R extends CharSequence> R wrap(StringBuilder buf, Class<R> type) {
+		if (String.class.equals(type)) {
+			return (R) buf.toString();
+		} else if (CharSequence.class.equals(type)) {
+			return (R) buf;
+		}
+		//todo Точно нужны корвертеры
+		throw new IllegalStateException("Unknown target type: " + type);
 	}
 }

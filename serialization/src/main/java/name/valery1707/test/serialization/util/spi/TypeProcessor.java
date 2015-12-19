@@ -9,5 +9,5 @@ public interface TypeProcessor<T> {
 
 	void write(Writer dst, T value) throws IOException;
 
-	T read(Reader src) throws IOException;
+	<R extends T> R read(Reader src, Class<R> type) throws IOException;
 }

@@ -67,6 +67,11 @@ public class SerializerTest {
 		test(new SimpleEntity("123\\321", null));
 	}
 
+	@Test
+	public void testSimpleEntity_int1() throws Exception {
+		test(new SimpleEntity(null, 10));
+	}
+
 	private SimpleTree makeSimpleTree1() {
 		return new SimpleTree("root"
 				, new SimpleTree("root.1", new SimpleTree("root.1.1"), new SimpleTree("root.1.2"))
