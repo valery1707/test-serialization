@@ -172,7 +172,8 @@ public class Serializer {
 	private void intWriteIterable(Writer dst, Iterable<?> src) throws IOException, IllegalAccessException {
 		//todo Write empty collections?
 		dst.append('[');
-		for (Iterator<?> iterator = src.iterator(); iterator.hasNext(); ) {//todo Null values?
+		for (Iterator<?> iterator = src.iterator(); iterator.hasNext(); ) {
+			//todo Write null values?
 			Object item = iterator.next();
 			intWriteSomething(dst, item);
 			if (iterator.hasNext()) {
