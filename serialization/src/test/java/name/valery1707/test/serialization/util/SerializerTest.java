@@ -1,7 +1,6 @@
 package name.valery1707.test.serialization.util;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -84,14 +83,13 @@ public class SerializerTest {
 		String dst = serializer.writeValueAsString(makeSimpleTree1());
 		assertThat(dst).isEqualTo(json(
 				"{'name':'root','children':[" +
-				"{'name':'root.1','children':[{'name':'root.1.1','children':[]},{'name':'root.1.2','children':[]}]},"+
-				"{'name':'root.2','children':[{'name':'root.2.1','children':[]},{'name':'root.2.2','children':[]}]}"+
+				"{'name':'root.1','children':[{'name':'root.1.1','children':[]},{'name':'root.1.2','children':[]}]}," +
+				"{'name':'root.2','children':[{'name':'root.2.1','children':[]},{'name':'root.2.2','children':[]}]}" +
 				"]}"
 		));
 	}
 
 	@Test
-	@Ignore
 	public void testSimpleTree() throws Exception {
 		test(makeSimpleTree1());
 	}

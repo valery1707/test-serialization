@@ -8,6 +8,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.*;
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 import java.util.*;
 
@@ -57,35 +59,101 @@ public class Serializer {
 	}
 
 	public <T> T readValue(Reader src, Class<T> clazz) throws Exception {
-		Map<String, Field> fields = StreamEx.of(clazz.getDeclaredFields()).toMap(Field::getName, f -> f);
-		T dst = null;
-		String fieldName = null;
+		return intReadSomething(src, clazz, null);
+	}
+
+	private <T> T intReadSomething(Reader src, Class<T> type, Type genericType) throws IOException, InstantiationException, IllegalAccessException {
+		TypeProcessor<T> processor = getProcessor(type);
+		if (processor != null) {
+			return processor.read(src);
+			//todo Process array
+		} else if (Iterable.class.isAssignableFrom(type)) {
+			return intReadIterable(src, type, genericType);
+			//todo Process Map
+		} else {
+			return intReadObject(src, type);
+		}
+	}
+
+	private <T> T intReadIterable(Reader src, Class<T> type, Type genericType) throws IOException, IllegalAccessException, InstantiationException {
+		Collection collect;
+		//todo Нужны подключаемые "конвертеры", которые будут разруливать эту ситуацию
+		if (Set.class.isAssignableFrom(type)) {
+			collect = new HashSet<>();
+		} else if (List.class.isAssignableFrom(type)) {
+			collect = new ArrayList<>();
+		} else {
+			throw new IllegalStateException("Unknown collection type: " + type);
+		}
+		T result = (T) collect;
+		Class<?> itemType;
+		if (genericType instanceof ParameterizedType) {
+			itemType = (Class<?>) ((ParameterizedType) genericType).getActualTypeArguments()[0];
+		} else {
+			itemType = Object.class;
+		}
+
 		int i;
+		i = src.read();
+		if (i < 0) {
+			throw new IllegalStateException("Catch OEF in collection start");
+		}
+		if ((char) i != '[') {
+			throw new IllegalStateException("Object definition started with illegal character: " + ((char) i));
+		}
 		while ((i = src.read()) >= 0) {
 			char c = (char) i;
 			switch (c) {
-				case '{'://Object start
-					dst = clazz.newInstance();
+				case ']'://Object end
+					return result;
+				case ','://Next item
 					break;
+				default:
+					CombinedReader reader = new CombinedReader(new CharArrayReader(new char[]{c}), src);
+					collect.add(intReadSomething(reader, itemType, null));
+			}
+		}
+		throw new IllegalStateException("Catch OEF in collection definition");
+	}
+
+	private <T> T intReadObject(Reader src, Class<T> type) throws IOException, IllegalAccessException, InstantiationException {
+		Map<String, Field> fieldByName = StreamEx.of(getFields(type)).toMap(Field::getName, f -> f);
+		int i;
+		i = src.read();
+		if (i < 0) {
+			return null;
+		}
+		if ((char) i != '{') {
+			throw new IllegalStateException("Object definition started with illegal character: " + ((char) i));
+		}
+		T dst = type.newInstance();
+		String fieldName = null;
+		while ((i = src.read()) >= 0) {
+			char c = (char) i;
+			switch (c) {
 				case '}'://Object end
 					return dst;
 				case '"'://Field name
 					fieldName = intReadString(src, true);
 					break;
 				case ':'://Field value
-					Field field = fields.get(fieldName);
+					Field field = fieldByName.get(fieldName);
 					if (field != null) {
-						Object value = intReadValue(src, field.getType());
-						intWriteFieldValue(dst, field, value);
+						Object value = intReadSomething(src, field.getType(), field.getGenericType());
+						beanWriteFieldValue(dst, field, value);
 					} else {
 						intSkipValue(src);
 					}
 					break;
 				case ','://Next field
 					fieldName = null;
+					break;
+				//todo Пропускать "пустые" символы
+				default:
+					throw new IllegalStateException("Catch illegal character in object definition: " + c);
 			}
 		}
-		return dst;
+		throw new IllegalStateException("Catch OEF in object definition");
 	}
 
 	private void intSkipValue(Reader src) throws IOException {
@@ -116,16 +184,6 @@ public class Serializer {
 					intReadString(src, true);
 					break;
 			}
-		}
-	}
-
-	private Object intReadValue(Reader src, Class<?> type) throws IOException {
-		TypeProcessor<?> processor = getProcessor(type);
-		if (processor != null) {
-			return processor.read(src);
-		} else {
-			intSkipValue(src);
-			return null;
 		}
 	}
 
@@ -188,7 +246,7 @@ public class Serializer {
 		dst.append('{');
 		Class<?> clazz = src.getClass();
 		List<Map.Entry<Field, Object>> values = StreamEx.of(getFields(clazz))
-				.mapToEntry(field -> intReadFieldValue(src, field))
+				.mapToEntry(field -> beanReadFieldValue(src, field))
 				.nonNullValues()
 				.toList();
 		for (Iterator<Map.Entry<Field, Object>> iterator = values.iterator(); iterator.hasNext(); ) {
@@ -205,7 +263,7 @@ public class Serializer {
 		dst.append('}');
 	}
 
-	private <T> void intWriteFieldValue(T dst, Field field, Object value) throws IllegalAccessException {
+	private <T> void beanWriteFieldValue(T dst, Field field, Object value) throws IllegalAccessException {
 		if (value == null) {
 			return;
 		}
@@ -222,7 +280,7 @@ public class Serializer {
 		}
 	}
 
-	private Object intReadFieldValue(Object src, Field field) {
+	private Object beanReadFieldValue(Object src, Field field) {
 		boolean accessible = field.isAccessible();
 		try {
 			if (!accessible) {
