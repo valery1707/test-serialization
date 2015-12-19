@@ -2,5 +2,10 @@ version = "0.0.1"
 
 dependencies {
 	compile 'one.util:streamex:0.5.1'
+
+	//Useful annotations
+	compile 'com.google.code.findbugs:jsr305:3.0.1'
+
+	//Testing
 	testCompile 'org.apache.commons:commons-lang3:3.4'
 }

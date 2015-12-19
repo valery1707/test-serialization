@@ -4,6 +4,8 @@ import name.valery1707.test.serialization.util.spi.TypeProcessor;
 import name.valery1707.test.serialization.util.utils.CombinedReader;
 import one.util.streamex.StreamEx;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
@@ -18,12 +20,13 @@ public class Serializer {
 	private final Map<Class, TypeProcessor<?>> processorMap = new HashMap<>();
 
 	public Serializer() {
-		ServiceLoader<TypeProcessor> loader = ServiceLoader.load(TypeProcessor.class);
-		processorList = StreamEx.of(loader.iterator()).map(p -> (TypeProcessor<?>) p).toList();
+		ServiceLoader<TypeProcessor> processorLoader = ServiceLoader.load(TypeProcessor.class);
+		processorList = StreamEx.of(processorLoader.iterator()).map(p -> (TypeProcessor<?>) p).toList();
 	}
 
 	@SuppressWarnings("unchecked")
 	private <T> TypeProcessor<T> getProcessor(Class<T> type) {
+		//todo Current realization is not thread-safe
 		TypeProcessor<?> processor = processorMap.computeIfAbsent(type, this::findProcessor);
 		return (TypeProcessor<T>) processor;
 	}
@@ -124,34 +127,49 @@ public class Serializer {
 		return getProcessor(String.class).read(src);
 	}
 
-	public String writeValueAsString(Object src) throws IOException, IllegalAccessException {
+	public String writeValueAsString(@Nullable Object src) throws IOException, IllegalAccessException {
 		StringWriter dst = new StringWriter();
 		writeValue(dst, src);
 		return dst.toString();
 	}
 
-	public void writeValue(OutputStream dst, Charset charset, Object src) throws IOException, IllegalAccessException {
+	public void writeValue(OutputStream dst, Charset charset, @Nullable Object src) throws IOException, IllegalAccessException {
 		writeValue(new OutputStreamWriter(dst, charset), src);
 	}
 
-	public void writeValue(Writer dst, Object src) throws IOException, IllegalAccessException {
-		if (src != null) {
-			dst.append('{');
-			Class<?> clazz = src.getClass();
-			for (Field field : clazz.getDeclaredFields()) {
-				Object value = intReadFieldValue(src, field);
-				if (value == null) {
-					continue;
-				}
-				TypeProcessor<?> processor = getProcessor(field.getType());
-				if (processor != null) {
-					intWriteString(dst, field.getName());
-					dst.append(':');
-					intWriteString(dst, (CharSequence) value);
-				}
-			}
-			dst.append('}');
+	public void writeValue(Writer dst, @Nullable Object src) throws IOException, IllegalAccessException {
+		intWriteSomething(dst, src);
+	}
+
+	private void intWriteSomething(Writer dst, @Nullable Object src) throws IOException, IllegalAccessException {
+		if (src == null) {
+			return;
 		}
+		Class<?> type = src.getClass();
+		TypeProcessor<Object> processor = (TypeProcessor<Object>) getProcessor(type);
+		if (processor != null) {
+			processor.write(dst, src);
+			//todo Process array
+			//todo Process Collection
+			//todo Process Map
+		} else {
+			intWriteObject(dst, src);
+		}
+	}
+
+	private void intWriteObject(Writer dst, @Nonnull Object src) throws IOException, IllegalAccessException {
+		dst.append('{');
+		Class<?> clazz = src.getClass();
+		for (Field field : clazz.getDeclaredFields()) {
+			Object value = intReadFieldValue(src, field);
+			if (value == null) {
+				continue;
+			}
+			intWriteString(dst, field.getName());
+			dst.append(':');
+			intWriteSomething(dst, value);
+		}
+		dst.append('}');
 	}
 
 	private <T> void intWriteFieldValue(T dst, Field field, Object value) throws IllegalAccessException {
