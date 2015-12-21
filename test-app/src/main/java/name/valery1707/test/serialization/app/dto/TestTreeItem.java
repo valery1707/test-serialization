@@ -2,6 +2,7 @@ package name.valery1707.test.serialization.app.dto;
 
 import javafx.scene.control.TreeItem;
 import javafx.util.StringConverter;
+import one.util.streamex.StreamEx;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -78,6 +79,16 @@ public class TestTreeItem {
 		TreeItem<TestTreeItem> item = new TreeItem<>(this);
 		item.setExpanded(!getChildren().isEmpty());
 		getChildren().forEach(children -> item.getChildren().add(children.toTreeItem()));
+		return item;
+	}
+
+	public static TestTreeItem fromTreeItem(TreeItem<TestTreeItem> root) {
+		TestTreeItem item = root.getValue();
+		item.setChildren(
+				StreamEx.of(root.getChildren())
+						.map(TestTreeItem::fromTreeItem)
+						.toList()
+		);
 		return item;
 	}
 

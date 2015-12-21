@@ -15,6 +15,7 @@ import javafx.stage.Stage;
 import name.valery1707.test.serialization.app.dto.TestTreeItem;
 import name.valery1707.test.serialization.util.Serializer;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
 
 public class TestSerialization extends Application {
@@ -55,6 +56,7 @@ public class TestSerialization extends Application {
 		//region Tree
 		tree = new TreeView<>();
 		tree.setShowRoot(true);
+		tree.setEditable(true);
 		tree.setCellFactory(item -> new TextFieldTreeCell<>(TestTreeItem.TreeStringConverter.INSTANCE));
 		pane.getItems().add(new VBox(actions, tree));
 		//endregion
@@ -72,7 +74,12 @@ public class TestSerialization extends Application {
 	}
 
 	private void serialize(ActionEvent event) {
-
+		try {
+			TestTreeItem root = TestTreeItem.fromTreeItem(tree.getRoot());
+			presentation.setText(serializer.writeValueAsString(root));
+		} catch (IOException | IllegalAccessException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void deserialize(ActionEvent event) {
