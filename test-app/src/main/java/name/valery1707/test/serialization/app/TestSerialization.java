@@ -91,6 +91,7 @@ public class TestSerialization extends Application {
 				treeDel.setDisable(false);
 			}
 		});
+		tree.setOnEditCommit(event -> tree.requestFocus());
 		exception = new Label();
 		exception.setTextFill(Color.RED);
 		pane.getItems().add(new VBox(actions, tree, exception));
