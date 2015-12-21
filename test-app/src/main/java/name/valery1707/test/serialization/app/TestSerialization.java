@@ -48,13 +48,23 @@ public class TestSerialization extends Application {
 		pane.setPadding(new Insets(25, 25, 25, 25));
 
 		//region Actions
+		Button treeAdd = new Button("", image("267-plus"));
+		treeAdd.setOnAction(this::treeAddAction);
+		treeAdd.setDisable(true);
+
+		Button treeDel = new Button("", image("268-minus"));
+		treeDel.setOnAction(this::treeDelAction);
+		treeDel.setDisable(true);
+
 		Button serialize = new Button("Сериализовать");
 		serialize.setOnAction(this::serialize);
 		serialize.setGraphic(image("317-arrow-right2"));
+
 		Button deserialize = new Button("Десериализовать");
 		deserialize.setOnAction(this::deserialize);
 		deserialize.setGraphic(image("321-arrow-left2"));
-		HBox actions = new HBox(serialize, deserialize);
+
+		HBox actions = new HBox(treeAdd, treeDel, serialize, deserialize);
 		//endregion
 
 		//region Tree
@@ -67,10 +77,18 @@ public class TestSerialization extends Application {
 		ContextMenu contextMenuAdd = new ContextMenu(treeAddMenu());
 		tree.setContextMenu(contextMenuFull);
 		tree.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-			if (newValue == null || newValue.getParent() == null) {
+			if (newValue == null) {
+				tree.setContextMenu(null);
+				treeAdd.setDisable(true);
+				treeDel.setDisable(true);
+			} else if (newValue.getParent() == null) {
 				tree.setContextMenu(contextMenuAdd);
+				treeAdd.setDisable(false);
+				treeDel.setDisable(true);
 			} else {
 				tree.setContextMenu(contextMenuFull);
+				treeAdd.setDisable(false);
+				treeDel.setDisable(false);
 			}
 		});
 		exception = new Label();
