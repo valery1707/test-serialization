@@ -1,6 +1,7 @@
 package name.valery1707.test.serialization.app.dto;
 
 import javafx.scene.control.TreeItem;
+import javafx.util.StringConverter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -78,5 +79,19 @@ public class TestTreeItem {
 		item.setExpanded(!getChildren().isEmpty());
 		getChildren().forEach(children -> item.getChildren().add(children.toTreeItem()));
 		return item;
+	}
+
+	public static class TreeStringConverter extends StringConverter<TestTreeItem> {
+		public static final TreeStringConverter INSTANCE = new TreeStringConverter();
+
+		@Override
+		public String toString(TestTreeItem object) {
+			return object != null ? object.getName() : null;
+		}
+
+		@Override
+		public TestTreeItem fromString(String string) {
+			return string != null ? new TestTreeItem(string) : null;
+		}
 	}
 }

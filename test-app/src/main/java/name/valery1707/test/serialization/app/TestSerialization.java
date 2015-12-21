@@ -8,6 +8,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TreeView;
+import javafx.scene.control.cell.TextFieldTreeCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -43,8 +44,6 @@ public class TestSerialization extends Application {
 		SplitPane pane = new SplitPane();
 		pane.setPadding(new Insets(25, 25, 25, 25));
 
-		Scene scene = new Scene(pane, 800, 600);
-
 		//region Actions
 		Button serialize = new Button("Сериализовать");
 		serialize.setOnAction(this::serialize);
@@ -56,6 +55,7 @@ public class TestSerialization extends Application {
 		//region Tree
 		tree = new TreeView<>();
 		tree.setShowRoot(true);
+		tree.setCellFactory(item -> new TextFieldTreeCell<>(TestTreeItem.TreeStringConverter.INSTANCE));
 		pane.getItems().add(new VBox(actions, tree));
 		//endregion
 
@@ -66,8 +66,7 @@ public class TestSerialization extends Application {
 		//endregion
 
 		primaryStage.setTitle("Serializer test app");
-		primaryStage.setScene(scene);
-		primaryStage.setScene(scene);
+		primaryStage.setScene(new Scene(pane, 800, 600));
 		primaryStage.show();
 		deserialize.fire();
 	}
