@@ -9,4 +9,5 @@ apply plugin: 'spring-boot'
 
 dependencies {
 	compile project(":serialization")
+	compile 'org.apache.commons:commons-lang3:3.4'
 }
