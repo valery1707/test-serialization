@@ -8,6 +8,8 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldTreeCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import name.valery1707.test.serialization.app.dto.TestTreeItem;
 import name.valery1707.test.serialization.util.Serializer;
@@ -27,6 +29,7 @@ public class TestSerialization extends Application {
 
 	private TreeView<TestTreeItem> tree;
 	private TextArea presentation;
+	private Label exception;
 
 	public static void main(String[] args) {
 		System.out.println("ZonedDateTime.now() = " + ZonedDateTime.now());
@@ -66,7 +69,9 @@ public class TestSerialization extends Application {
 				tree.setContextMenu(contextMenuFull);
 			}
 		});
-		pane.getItems().add(new VBox(actions, tree));
+		exception = new Label();
+		exception.setTextFill(Color.RED);
+		pane.getItems().add(new VBox(actions, tree, exception));
 		//endregion
 
 		//region Serialization result
@@ -107,19 +112,23 @@ public class TestSerialization extends Application {
 	}
 
 	private void serialize(ActionEvent event) {
+		exception.setText("");
 		try {
 			TestTreeItem root = TestTreeItem.fromTreeItem(tree.getRoot());
 			presentation.setText(serializer.writeValueAsString(root));
 		} catch (IOException | IllegalAccessException e) {
+			exception.setText(e.getMessage());
 			e.printStackTrace();
 		}
 	}
 
 	private void deserialize(ActionEvent event) {
+		exception.setText("");
 		try {
 			TestTreeItem root = serializer.readValue(presentation.getText(), TestTreeItem.class);
 			tree.setRoot(root.toTreeItem());
 		} catch (Exception e) {
+			exception.setText(e.getMessage());
 			e.printStackTrace();
 		}
 	}
