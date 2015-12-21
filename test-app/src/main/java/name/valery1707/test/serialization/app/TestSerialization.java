@@ -51,10 +51,12 @@ public class TestSerialization extends Application {
 		Button treeAdd = new Button("", image("267-plus"));
 		treeAdd.setOnAction(this::treeAddAction);
 		treeAdd.setDisable(true);
+		treeAdd.setTooltip(new Tooltip("Добавить элемент в дерево (Insert)"));
 
 		Button treeDel = new Button("", image("268-minus"));
 		treeDel.setOnAction(this::treeDelAction);
 		treeDel.setDisable(true);
+		treeDel.setTooltip(new Tooltip("Удалить элемент из дерева (Delete)"));
 
 		Button serialize = new Button("Сериализовать");
 		serialize.setOnAction(this::serialize);
@@ -92,6 +94,16 @@ public class TestSerialization extends Application {
 			}
 		});
 		tree.setOnEditCommit(event -> tree.requestFocus());
+		tree.setOnKeyReleased(event -> {
+			switch (event.getCode()) {
+				case INSERT:
+					treeAdd.fire();
+					break;
+				case DELETE:
+					treeDel.fire();
+					break;
+			}
+		});
 		exception = new Label();
 		exception.setTextFill(Color.RED);
 		pane.getItems().add(new VBox(actions, tree, exception));
