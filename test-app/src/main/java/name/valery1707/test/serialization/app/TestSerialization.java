@@ -72,6 +72,7 @@ public class TestSerialization extends Application {
 		//region Serialization result
 		presentation = new TextArea();
 		presentation.setText(sampleTree);
+		presentation.setWrapText(true);
 		pane.getItems().add(presentation);
 		//endregion
 
