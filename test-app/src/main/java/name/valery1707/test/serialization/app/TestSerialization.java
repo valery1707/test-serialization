@@ -4,10 +4,7 @@ import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.SplitPane;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TreeView;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldTreeCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -58,6 +55,17 @@ public class TestSerialization extends Application {
 		tree.setShowRoot(true);
 		tree.setEditable(true);
 		tree.setCellFactory(item -> new TextFieldTreeCell<>(TestTreeItem.TreeStringConverter.INSTANCE));
+		tree.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+		ContextMenu contextMenuFull = new ContextMenu(treeAddMenu(), treeDelMenu());
+		ContextMenu contextMenuAdd = new ContextMenu(treeAddMenu());
+		tree.setContextMenu(contextMenuFull);
+		tree.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+			if (newValue == null || newValue.getParent() == null) {
+				tree.setContextMenu(contextMenuAdd);
+			} else {
+				tree.setContextMenu(contextMenuFull);
+			}
+		});
 		pane.getItems().add(new VBox(actions, tree));
 		//endregion
 
@@ -71,6 +79,30 @@ public class TestSerialization extends Application {
 		primaryStage.setScene(new Scene(pane, 800, 600));
 		primaryStage.show();
 		deserialize.fire();
+	}
+
+	private MenuItem treeAddMenu() {
+		MenuItem treeAdd = new MenuItem("+");
+		treeAdd.setOnAction(this::treeAddAction);
+		return treeAdd;
+	}
+
+	private void treeAddAction(ActionEvent event) {
+		TreeItem<TestTreeItem> selectedItem = tree.getSelectionModel().getSelectedItem();
+		selectedItem.getChildren().add(new TestTreeItem("new").toTreeItem());
+		selectedItem.setExpanded(true);
+	}
+
+	private MenuItem treeDelMenu() {
+		MenuItem treeDel = new MenuItem("-");
+		treeDel.setOnAction(this::treeDelAction);
+		return treeDel;
+	}
+
+	private void treeDelAction(ActionEvent event) {
+		TreeItem<TestTreeItem> selectedItem = tree.getSelectionModel().getSelectedItem();
+		//noinspection unchecked
+		selectedItem.getParent().getChildren().removeAll(selectedItem);
 	}
 
 	private void serialize(ActionEvent event) {
