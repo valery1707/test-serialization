@@ -1,0 +1,11 @@
+[icomoon]
+Name: IcoMoon - Free
+Source-URL: http://icomoon.io/
+License: Creative Commons (Attribution 3.0 United States)
+License-URL: http://creativecommons.org/licenses/by/3.0/
+License-TL;DR: http://www.tldrlegal.com/l/CC
+License-Description: This means you can freely use these icons for any purpose, private and commercial, including online services, templates, themes and software.
+ However, you should include a link to this page in your credits.
+ The icons may not be resold, sub-licensed, rented, transferred or otherwise made available for use.
+ Please link to this page (https://www.fatcow.com/free-icons) on fatcow.com if you would like to spread the word.
+

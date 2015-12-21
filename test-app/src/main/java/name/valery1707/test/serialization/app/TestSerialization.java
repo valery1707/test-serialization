@@ -6,15 +6,17 @@ import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldTreeCell;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import name.valery1707.test.serialization.app.dto.TestTreeItem;
 import name.valery1707.test.serialization.util.Serializer;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.ZonedDateTime;
 
 public class TestSerialization extends Application {
@@ -48,8 +50,10 @@ public class TestSerialization extends Application {
 		//region Actions
 		Button serialize = new Button("Сериализовать");
 		serialize.setOnAction(this::serialize);
+		serialize.setGraphic(image("317-arrow-right2"));
 		Button deserialize = new Button("Десериализовать");
 		deserialize.setOnAction(this::deserialize);
+		deserialize.setGraphic(image("321-arrow-left2"));
 		HBox actions = new HBox(serialize, deserialize);
 		//endregion
 
@@ -89,6 +93,7 @@ public class TestSerialization extends Application {
 
 	private MenuItem treeAddMenu() {
 		MenuItem treeAdd = new MenuItem("+");
+		treeAdd.setGraphic(image("267-plus"));
 		treeAdd.setOnAction(this::treeAddAction);
 		return treeAdd;
 	}
@@ -101,6 +106,7 @@ public class TestSerialization extends Application {
 
 	private MenuItem treeDelMenu() {
 		MenuItem treeDel = new MenuItem("-");
+		treeDel.setGraphic(image("268-minus"));
 		treeDel.setOnAction(this::treeDelAction);
 		return treeDel;
 	}
@@ -131,5 +137,10 @@ public class TestSerialization extends Application {
 			exception.setText(e.getMessage());
 			e.printStackTrace();
 		}
+	}
+
+	private ImageView image(String name) {
+		InputStream stream = getClass().getResourceAsStream("/icons/icomoon/" + name + ".png");
+		return new ImageView(new Image(stream, 16, 16, true, true));
 	}
 }
