@@ -105,9 +105,9 @@ public class TestSerialization extends Application {
 		return treeDel;
 	}
 
+	@SuppressWarnings("unchecked")
 	private void treeDelAction(ActionEvent event) {
 		TreeItem<TestTreeItem> selectedItem = tree.getSelectionModel().getSelectedItem();
-		//noinspection unchecked
 		selectedItem.getParent().getChildren().removeAll(selectedItem);
 	}
 
