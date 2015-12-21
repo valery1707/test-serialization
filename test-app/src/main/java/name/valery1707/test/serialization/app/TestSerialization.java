@@ -3,14 +3,13 @@ package name.valery1707.test.serialization.app;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import name.valery1707.test.serialization.app.dto.TestTreeItem;
 import name.valery1707.test.serialization.util.Serializer;
@@ -41,10 +40,7 @@ public class TestSerialization extends Application {
 
 	@Override
 	public void start(Stage primaryStage) {
-		GridPane pane = new GridPane();
-		pane.setAlignment(Pos.CENTER);
-		pane.setHgap(10);
-		pane.setVgap(10);
+		SplitPane pane = new SplitPane();
 		pane.setPadding(new Insets(25, 25, 25, 25));
 
 		Scene scene = new Scene(pane, 800, 600);
@@ -55,19 +51,18 @@ public class TestSerialization extends Application {
 		Button deserialize = new Button("Десериализовать");
 		deserialize.setOnAction(this::deserialize);
 		HBox actions = new HBox(serialize, deserialize);
-		pane.add(actions, 0, 0);
 		//endregion
 
 		//region Tree
 		tree = new TreeView<>();
 		tree.setShowRoot(true);
-		pane.add(tree, 0, 1);
+		pane.getItems().add(new VBox(actions, tree));
 		//endregion
 
 		//region Serialization result
 		presentation = new TextArea();
 		presentation.setText(sampleTree);
-		pane.add(presentation, 1, 0, 1, 2);
+		pane.getItems().add(presentation);
 		//endregion
 
 		primaryStage.setTitle("Serializer test app");
